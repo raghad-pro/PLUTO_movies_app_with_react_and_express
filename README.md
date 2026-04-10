@@ -5,7 +5,7 @@ A movie browsing web app built with React and the OMDb API.
 ##  How to Run
 
 1. Clone the repository
-   git clone 
+   git clone https://github.com/raghad-pro/react-movie-app/tree/main
 
 2. Install dependencies
    npm install
