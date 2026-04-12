@@ -16,7 +16,7 @@ app.get("/movies", (req, res) => {
     try {
     const data = fs.readFileSync(moviesPath, "utf-8");
     const movies = JSON.parse(data);
-
+    
     res.status(200).json({
       success: true,
       message: "Movies returned correctly",
