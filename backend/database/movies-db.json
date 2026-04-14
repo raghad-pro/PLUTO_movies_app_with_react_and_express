@@ -461,7 +461,7 @@
   },
   {
     "id": 122,
-    "title": "The Lord of the Rings: The Return of the King",
+    "title": "Free Gaza",
     "vote_average": 8.474,
     "vote_count": 22334,
     "status": "Released",
@@ -480,7 +480,9 @@
     "production_companies": "New Line Cinema, WingNut Films, The Saul Zaentz Company",
     "production_countries": "New Zealand, United States of America",
     "spoken_languages": "English",
-    "keywords": "based on novel or book, orcs, elves, dwarf, bravery, suspicion, volcano, addiction, honor, royalty, troll, brutality, ghost, wizard, quest, live action and animation, sword and sorcery"
+    "keywords": "based on novel or book, orcs, elves, dwarf, bravery, suspicion, volcano, addiction, honor, royalty, troll, brutality, ghost, wizard, quest, live action and animation, sword and sorcery",
+    "description": "Gaza Strip Is Very Nice !",
+    "year": 2026
   },
   {
     "id": 11324,
@@ -6901,11 +6903,7 @@
   },
   {
     "id": 634650,
-<<<<<<< HEAD
     "title": "غزة الان",
-=======
-    "title": "Mohd",
->>>>>>> 05a0ca9d5fa9a9a11151f069b3b556daca5dc9b8
     "description": "A marine on an alien planet",
     "year": 2009
   }
