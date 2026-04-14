@@ -114,6 +114,63 @@ app.post("/movies", (req, res) => {
     });
   }
 });
+
+app.patch("/movies/:id", (req, res) => {
+  const id = req.params.id;
+  const { title, description, year } = req.body;
+  const data = fs.readFileSync(moviesPath, "utf-8");
+  const movies = JSON.parse(data);
+  const movieIndex = movies.findIndex((m) => m.id == id);
+
+  if (movieIndex === -1) {
+    return res.status(404).json({
+      success: false,
+      message: "Movie not found",
+    });
+  }
+
+  if (title !== undefined && title.trim() === "") {
+    return res.status(400).json({
+      success: false,
+      message: "Title cannot be empty",
+    });
+  }
+
+  if (description !== undefined && description.trim() === "") {
+    return res.status(400).json({
+      success: false,
+      message: "Description cannot be empty",
+    });
+  }
+
+  if (year !== undefined && isNaN(Number(year))) {
+    return res.status(400).json({
+      success: false,
+      message: "Year must be a valid number",
+    });
+  }
+
+  if (title !== undefined) {
+    movies[movieIndex].title = title;
+  }
+
+  if (description !== undefined) {
+    movies[movieIndex].description = description;
+  }
+
+  if (year !== undefined) {
+    movies[movieIndex].year = Number(year);
+  }
+
+  fs.writeFileSync(moviesPath, JSON.stringify(movies, null, 2));
+
+  return res.status(200).json({
+    success: true,
+    message: "Movie updated successfully",
+    data: movies[movieIndex],
+  });
+});
+
 app.listen(3000, () => {
     console.log("Server is running on port 3000");
 });
