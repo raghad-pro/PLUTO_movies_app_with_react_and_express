@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const fs = require("fs");
 const path = require("path");
+const { exit } = require("process");
 
 app.use(express.json());
 
@@ -171,6 +172,39 @@ app.patch("/movies/:id", (req, res) => {
   });
 });
 
+app.delete("/movies/:id", (req, res) => {
+  try {
+    const id = req.params.id;
+    const data = fs.readFileSync(moviesPath, "utf-8");
+    const movies = JSON.parse(data);
+
+    const movieToDelete = movies.find(m => m.id == id);
+
+    if (!movieToDelete) {
+      return res.status(404).json({
+        success: false,
+        message: "Movie not found",
+      });
+    }
+
+    const filteredMovies = movies.filter(m => m.id != id);
+    fs.writeFileSync(moviesPath, JSON.stringify(filteredMovies, null, 2));
+
+    return res.status(200).json({
+      success: true,
+      message: "Movie deleted successfully",
+      data: movieToDelete,
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+      error: error.message,
+    });
+  }
+});
+
 app.listen(3000, () => {
-    console.log("Server is running on port 3000");
+  console.log("Server is running on port 3000");
 });
