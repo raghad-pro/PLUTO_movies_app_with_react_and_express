@@ -2,11 +2,11 @@ const express = require("express");
 const app = express();
 const fs = require("fs");
 const path = require("path");
+const { exit } = require("process");
 
 app.use(express.json());
 
 app.get("/test", async (req, res) => {
-    console.log("sever")
     res.send("Server is working");
 });
 
@@ -204,50 +204,6 @@ app.delete("/movies/:id", (req, res) => {
     });
   }
 });
-
-app.get("/movies", (req, res) => {
-  try {
-    const data = fs.readFileSync(moviesPath, "utf-8");
-    const movies = JSON.parse(data);
-    console.log("************")
-    const search = req.query.search;
-    console.log(search);
-    console.log("************")
-    if (search) {
-      const filteredMovies = movies.filter((movie) =>
-        movie.title.toLowerCase().includes(search.toLowerCase())
-      );
-
-      if (filteredMovies.length === 0) {
-        return res.status(200).json({
-          success: true,
-          message: "No movies found",
-          data: [],
-        });
-      }
-
-      return res.status(200).json({
-        success: true,
-        message: "Movies found",
-        data: filteredMovies,
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "Movies returned correctly",
-      data: movies,
-    });
-
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Failed to read movies file",
-      error: error.message,
-    });
-  }
-});
-
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
