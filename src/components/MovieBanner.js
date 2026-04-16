@@ -4,18 +4,17 @@ export default function MovieBanner({ movie }) {
   const [showTooltip, setShowTooltip] = useState(false);
   const [isTruncated, setIsTruncated] = useState(false);
   const titleRef = useRef(null);
-useEffect(() => {
-  const checkTruncation = () => {
-    if (titleRef.current) {
-      setIsTruncated(titleRef.current.scrollWidth > titleRef.current.clientWidth);
-    }
-  };
 
-  checkTruncation();
-  window.addEventListener("resize", checkTruncation);
-
-  return () => window.removeEventListener("resize", checkTruncation);
-}, [movie?.Title]);
+  useEffect(() => {
+    const checkTruncation = () => {
+      if (titleRef.current) {
+        setIsTruncated(titleRef.current.scrollWidth > titleRef.current.clientWidth);
+      }
+    };
+    checkTruncation();
+    window.addEventListener("resize", checkTruncation);
+    return () => window.removeEventListener("resize", checkTruncation);
+  }, [movie?.Title]);
 
   if (!movie) return null;
 

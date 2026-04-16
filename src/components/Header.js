@@ -1,5 +1,6 @@
 import '../App.css';
-export default function Header({ onSearch }) {
+
+export default function Header({ onSearch, onAdd }) {
 
   function handleKeyDown(e) {
     if (e.key === "Enter") {
@@ -16,13 +17,20 @@ export default function Header({ onSearch }) {
           <span>new</span> movie
         </div>
 
-        <div className="search">
-          <i className="fas fa-search"></i>
-          <input
-            type="search"
-            placeholder="Search..."
-            onKeyDown={handleKeyDown}
-          />
+        <div className="header-right">
+          <div className="search">
+            <i className="fas fa-search"></i>
+            <input
+              type="search"
+              placeholder="Search..."
+              onKeyDown={handleKeyDown}
+            />
+          </div>
+
+          <button className="btn-add-movie" onClick={onAdd}>
+            <i className="fas fa-plus" style={{ marginRight: 6 }}></i>
+            Add Movie
+          </button>
         </div>
 
       </div>
