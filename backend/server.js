@@ -19,13 +19,26 @@ app.get("/movies", (req, res) => {
     const movies = JSON.parse(data);
 
     const search = req.query.search?.trim().toLowerCase();
+    const limit = parseInt(req.query.limit);
 
     let result = movies;
-
+    
     if (search) {
       result = movies.filter((movie) =>
         movie.title?.toLowerCase().trim().includes(search)
       );
+
+      if (result.length === 0) {
+        return res.status(200).json({
+          success: true,
+          message: "No movies found",
+          data: [],
+        });
+      }
+    }
+
+    if (!isNaN(limit) && limit > 0) {
+      result = result.slice(0, limit);
     }
 
     return res.status(200).json({
