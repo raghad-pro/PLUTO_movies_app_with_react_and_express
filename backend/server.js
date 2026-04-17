@@ -5,27 +5,24 @@ const path = require("path");
 
 app.use(express.json());
 
-app.get("/test", async (req, res) => {
-    console.log("sever")
-    res.send("Server is working");
-});
-
+const API_KEY = "f6d3ed3f";
 
 const moviesPath = path.join(__dirname, "database", "movies-db.json");
 
-app.get("/movies", (req, res) => {
+
+app.get("/movies", async (req, res) => {
   try {
     const data = fs.readFileSync(moviesPath, "utf-8");
-    const movies = JSON.parse(data);
+    let movies = JSON.parse(data);
 
     const search = req.query.search?.trim().toLowerCase();
     const limit = parseInt(req.query.limit);
 
     let result = movies;
-    
+
     if (search) {
-      result = movies.filter((movie) =>
-        movie.title?.toLowerCase().trim().includes(search)
+      result = result.filter((movie) =>
+        movie.title?.toLowerCase().includes(search)
       );
 
       if (result.length === 0) {
@@ -41,6 +38,28 @@ app.get("/movies", (req, res) => {
       result = result.slice(0, limit);
     }
 
+    await Promise.all(
+      result.map(async (movie) => {
+        if (!movie.poster && movie.imdb_id) {
+          try {
+            const response = await fetch(
+              `http://www.omdbapi.com/?i=${movie.imdb_id}&apikey=${API_KEY}`
+            );
+
+            const data = await response.json();
+
+            if (data.Poster && data.Poster !== "N/A") {
+              movie.poster = data.Poster;
+            }
+          } catch (err) {
+            console.log("Error fetching poster:", err.message);
+          }
+        }
+      })
+    );
+
+    fs.writeFileSync(moviesPath, JSON.stringify(movies, null, 2));
+
     return res.status(200).json({
       success: true,
       data: result,
@@ -49,41 +68,46 @@ app.get("/movies", (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: "Failed to read movies file",
+      message: "Failed to load movies",
       error: error.message,
     });
   }
 });
 
-app.get("/movies/:id",(req,res)=>{
-  try{
-  const id = req.params.id;
-  const data = fs.readFileSync(moviesPath, "utf-8");
-  const movies = JSON.parse(data);
-  const movie = movies.find((m)=> m.id == id);
-  if(!movie){
-    return res.status(404).json({
-      success: false,
-      message: "Movie not found",
-    });
-  }
-  return res.status(200).json({
+
+app.get("/movies/:id", (req, res) => {
+  try {
+    const id = req.params.id;
+    const data = fs.readFileSync(moviesPath, "utf-8");
+    const movies = JSON.parse(data);
+
+    const movie = movies.find((m) => m.id == id);
+
+    if (!movie) {
+      return res.status(404).json({
+        success: false,
+        message: "Movie not found",
+      });
+    }
+
+    return res.status(200).json({
       success: true,
-      message: "Movie found",
       data: movie,
-  });
-}catch(error){
-  return res.status(500).json({
-    success : false,
-    message: "Something went wrong",
-    error: error.message,
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+      error: error.message,
     });
   }
-})
+});
+
 
 app.post("/movies", (req, res) => {
   try {
-    const { title, description, year } = req.body;
+    const { title, description, year, imdb_id } = req.body;
 
     if (!title || !description || !year) {
       return res.status(400).json({
@@ -92,40 +116,26 @@ app.post("/movies", (req, res) => {
       });
     }
 
-    if (typeof year !== "number") {
-      return res.status(400).json({
-        success: false,
-        message: "Year must be a number",
-      });
-    }
-
     const data = fs.readFileSync(moviesPath, "utf-8");
     const movies = JSON.parse(data);
 
-    const exists = movies.find(m => m.title === title);
-    if (exists) {
-      return res.status(409).json({
-        success: false,
-        message: "Movie already exists",
-      });
-    }
-
     const maxId = movies.reduce((max, m) => (m.id > max ? m.id : max), 0);
-    const newId = maxId + 1;
 
     const newMovie = {
-      id: newId,
+      id: maxId + 1,
       title,
       description,
       year,
+      imdb_id: imdb_id || null,
+      poster: null,
     };
 
     movies.push(newMovie);
+
     fs.writeFileSync(moviesPath, JSON.stringify(movies, null, 2));
 
     return res.status(201).json({
       success: true,
-      message: "Movie created successfully",
       data: newMovie,
     });
 
@@ -138,84 +148,33 @@ app.post("/movies", (req, res) => {
   }
 });
 
+
 app.patch("/movies/:id", (req, res) => {
-  const id = req.params.id;
-  const { title, description, year } = req.body;
-  const data = fs.readFileSync(moviesPath, "utf-8");
-  const movies = JSON.parse(data);
-  const movieIndex = movies.findIndex((m) => m.id == id);
-
-  if (movieIndex === -1) {
-    return res.status(404).json({
-      success: false,
-      message: "Movie not found",
-    });
-  }
-
-  if (title !== undefined && title.trim() === "") {
-    return res.status(400).json({
-      success: false,
-      message: "Title cannot be empty",
-    });
-  }
-
-  if (description !== undefined && description.trim() === "") {
-    return res.status(400).json({
-      success: false,
-      message: "Description cannot be empty",
-    });
-  }
-
-  if (year !== undefined && isNaN(Number(year))) {
-    return res.status(400).json({
-      success: false,
-      message: "Year must be a valid number",
-    });
-  }
-
-  if (title !== undefined) {
-    movies[movieIndex].title = title;
-  }
-
-  if (description !== undefined) {
-    movies[movieIndex].description = description;
-  }
-
-  if (year !== undefined) {
-    movies[movieIndex].year = Number(year);
-  }
-
-  fs.writeFileSync(moviesPath, JSON.stringify(movies, null, 2));
-
-  return res.status(200).json({
-    success: true,
-    message: "Movie updated successfully",
-    data: movies[movieIndex],
-  });
-});
-
-app.delete("/movies/:id", (req, res) => {
   try {
     const id = req.params.id;
+    const { title, description, year } = req.body;
+
     const data = fs.readFileSync(moviesPath, "utf-8");
     const movies = JSON.parse(data);
 
-    const movieToDelete = movies.find(m => m.id == id);
+    const index = movies.findIndex((m) => m.id == id);
 
-    if (!movieToDelete) {
+    if (index === -1) {
       return res.status(404).json({
         success: false,
         message: "Movie not found",
       });
     }
 
-    const filteredMovies = movies.filter(m => m.id != id);
-    fs.writeFileSync(moviesPath, JSON.stringify(filteredMovies, null, 2));
+    if (title !== undefined) movies[index].title = title;
+    if (description !== undefined) movies[index].description = description;
+    if (year !== undefined) movies[index].year = Number(year);
+
+    fs.writeFileSync(moviesPath, JSON.stringify(movies, null, 2));
 
     return res.status(200).json({
       success: true,
-      message: "Movie deleted successfully",
-      data: movieToDelete,
+      data: movies[index],
     });
 
   } catch (error) {
@@ -226,6 +185,42 @@ app.delete("/movies/:id", (req, res) => {
     });
   }
 });
+
+
+app.delete("/movies/:id", (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const data = fs.readFileSync(moviesPath, "utf-8");
+    const movies = JSON.parse(data);
+
+    const movie = movies.find((m) => m.id == id);
+
+    if (!movie) {
+      return res.status(404).json({
+        success: false,
+        message: "Movie not found",
+      });
+    }
+
+    const updatedMovies = movies.filter((m) => m.id != id);
+
+    fs.writeFileSync(moviesPath, JSON.stringify(updatedMovies, null, 2));
+
+    return res.status(200).json({
+      success: true,
+      data: movie,
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+      error: error.message,
+    });
+  }
+});
+
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
