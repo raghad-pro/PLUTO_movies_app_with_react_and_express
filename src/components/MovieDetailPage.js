@@ -5,7 +5,7 @@ export default function MovieDetailPage({ movie, onBack, onEdit, onDelete }) {
 
   useEffect(() => {
     document.body.style.backgroundImage = "none";
-    return () => { document.body.style.backgroundImage = "none"; };
+    return () => { document.body.style.backgroundImage = "none"; };//
   }, [movie]);
 
   if (!movie) return null;

@@ -9,7 +9,7 @@ export default function ConfirmModal({ title, onConfirm, onCancel }) {
         </div>
         <p className="confirm-title">are you sure?</p>
         <p className="confirm-sub">
-      It will be permanently deleted<strong>{title}</strong>
+      It will be permanently deleted <strong>{title}</strong>
         </p>
         <div className="modal-buttons">
           <button className="btn-cancel" onClick={onCancel}>cancel</button>
