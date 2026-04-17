@@ -1,4 +1,4 @@
-import './App.css';
+import "./App.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { useState, useEffect } from "react";
 import Header from "./components/Header";
@@ -8,23 +8,18 @@ import MovieDetailPage from "./components/MovieDetailPage";
 import ConfirmModal from "./components/ConfirmModal";
 import MovieFormModal from "./components/MovieFormModal";
 import Toast from "./components/Toast";
-
-const API_KEY = "9f4065b3";
-const API_BASE = `https://www.omdbapi.com/?apikey=${API_KEY}`;
+import * as movieApi from "./services/api";
 
 function App() {
   const [movies, setMovies] = useState([]);
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [hoveredMovie, setHoveredMovie] = useState(null);
   const [status, setStatus] = useState("loading");
-
   const [page, setPage] = useState("home");
   const [detailMovie, setDetailMovie] = useState(null);
-
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [editMovie, setEditMovie] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
-
   const [toast, setToast] = useState(null);
   const [saveBanner, setSaveBanner] = useState(false);
 
@@ -40,39 +35,22 @@ function App() {
     setSelectedMovie(null);
     setHoveredMovie(null);
     try {
-      const res = await fetch(`${API_BASE}&s=${query}&type=movie`);
-      const data = await res.json();
-
-      if (data.Response === "False") {
+      const data = await movieApi.getMovies(query);
+      if (!data || data.length === 0) {
         setStatus("empty");
         return;
       }
-
-      const unique = data.Search.filter(
-        (movie, index, self) =>
-          index === self.findIndex(m => m.imdbID === movie.imdbID)
-      );
-
-      const results = await Promise.allSettled(
-        unique.slice(0, 20).map(async (movie) => {
-          const r = await fetch(`${API_BASE}&i=${movie.imdbID}`);
-          return r.json();
-        })
-      );
-
-      const detailed = results
-        .filter(r => r.status === "fulfilled")
-        .map(r => r.value);
-
-      setMovies(detailed);
-      setSelectedMovie(detailed[0]);
+      setMovies(data);
+      setSelectedMovie(data[0]);
       setStatus("success");
     } catch {
       setStatus("error");
     }
   }
 
-  useEffect(() => { fetchMovies(); }, []);
+  useEffect(() => {
+    fetchMovies();
+  }, []);
 
   useEffect(() => {
     const movie = hoveredMovie || selectedMovie;
@@ -92,32 +70,47 @@ function App() {
     setConfirmDelete(movie);
   }
 
-  function handleDeleteConfirm() {
-    setMovies(prev => prev.filter(m => m.imdbID !== confirmDelete.imdbID));
-    if (selectedMovie?.imdbID === confirmDelete.imdbID) setSelectedMovie(null);
-    if (detailMovie?.imdbID === confirmDelete.imdbID) setPage("home");
-    setConfirmDelete(null);
-    showToast("تم الحذف بنجاح", "success");
+  async function handleDeleteConfirm() {
+    try {
+      await movieApi.deleteMovie(confirmDelete.id);
+      setMovies(prev => prev.filter(m => m.id !== confirmDelete.id));
+      if (selectedMovie?.id === confirmDelete.id) setSelectedMovie(null);
+      if (detailMovie?.id === confirmDelete.id) setPage("home");
+      setConfirmDelete(null);
+      showToast("Deleted successfully");
+    } catch {
+      showToast("Failed to delete", "error");
+    }
   }
 
   function handleEditRequest(movie) {
     setEditMovie(movie);
   }
 
-  function handleEditSave(updated) {
-    setMovies(prev => prev.map(m => m.imdbID === updated.imdbID ? updated : m));
-    if (selectedMovie?.imdbID === updated.imdbID) setSelectedMovie(updated);
-    if (detailMovie?.imdbID === updated.imdbID) setDetailMovie(updated);
-    setEditMovie(null);
-    setSaveBanner(true);
-    setTimeout(() => setSaveBanner(false), 3000);
+  async function handleEditSave(updated) {
+    try {
+      const saved = await movieApi.updateMovie(updated.id, updated);
+      setMovies(prev => prev.map(m => m.id === saved.id ? saved : m));
+      if (selectedMovie?.id === saved.id) setSelectedMovie(saved);
+      if (detailMovie?.id === saved.id) setDetailMovie(saved);
+      setEditMovie(null);
+      setSaveBanner(true);
+      setTimeout(() => setSaveBanner(false), 3000);
+    } catch {
+      showToast("Failed to update", "error");
+    }
   }
 
-  function handleAddSave(newMovie) {
-    setMovies(prev => [newMovie, ...prev]);
-    setSelectedMovie(newMovie);
-    setShowAddModal(false);
-    showToast("تم الإضافة بنجاح", "success");
+  async function handleAddSave(newMovie) {
+    try {
+      const savedMovie = await movieApi.addMovie(newMovie);
+      setMovies(prev => [savedMovie, ...prev]);
+      setSelectedMovie(savedMovie);
+      setShowAddModal(false);
+      showToast("Added Successfully", "success");
+    } catch {
+      showToast("Failed to add movie", "error");
+    }
   }
 
   if (page === "detail" && detailMovie) {
@@ -145,7 +138,13 @@ function App() {
           />
         )}
         {saveBanner && <div className="save-banner">Saved Successfully</div>}
-        {toast && <Toast message={toast.message} type={toast.type} onDone={() => setToast(null)} />}
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onDone={() => setToast(null)}
+          />
+        )}
       </>
     );
   }
@@ -186,7 +185,13 @@ function App() {
         />
       )}
       {saveBanner && <div className="save-banner">Saved Successfully</div>}
-      {toast && <Toast message={toast.message} type={toast.type} onDone={() => setToast(null)} />}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onDone={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

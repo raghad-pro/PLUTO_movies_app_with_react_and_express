@@ -5,7 +5,7 @@ A movie browsing web app built with React and the OMDb API.
 ##  How to Run
 
 1. Clone the repository
-   git clone 
+   git clone https://github.com/raghad-pro/PLUTO_movies_app_with_react_and_express
 
 2. Install dependencies
    npm install
