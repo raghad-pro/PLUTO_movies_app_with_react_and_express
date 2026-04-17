@@ -14,21 +14,30 @@ app.get("/test", async (req, res) => {
 const moviesPath = path.join(__dirname, "database", "movies-db.json");
 
 app.get("/movies", (req, res) => {
-    try {
+  try {
     const data = fs.readFileSync(moviesPath, "utf-8");
     const movies = JSON.parse(data);
-    
-    res.status(200).json({
+
+    const search = req.query.search?.trim().toLowerCase();
+
+    let result = movies;
+
+    if (search) {
+      result = movies.filter((movie) =>
+        movie.title?.toLowerCase().trim().includes(search)
+      );
+    }
+
+    return res.status(200).json({
       success: true,
-      message: "Movies returned correctly",
-      data: movies
+      data: result,
     });
 
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Failed to read movies file",
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -204,50 +213,6 @@ app.delete("/movies/:id", (req, res) => {
     });
   }
 });
-
-app.get("/movies", (req, res) => {
-  try {
-    const data = fs.readFileSync(moviesPath, "utf-8");
-    const movies = JSON.parse(data);
-    console.log("************")
-    const search = req.query.search;
-    console.log(search);
-    console.log("************")
-    if (search) {
-      const filteredMovies = movies.filter((movie) =>
-        movie.title.toLowerCase().includes(search.toLowerCase())
-      );
-
-      if (filteredMovies.length === 0) {
-        return res.status(200).json({
-          success: true,
-          message: "No movies found",
-          data: [],
-        });
-      }
-
-      return res.status(200).json({
-        success: true,
-        message: "Movies found",
-        data: filteredMovies,
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "Movies returned correctly",
-      data: movies,
-    });
-
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Failed to read movies file",
-      error: error.message,
-    });
-  }
-});
-
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
