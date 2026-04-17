@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:5000";
+const API_BASE = "http://localhost:3000";
 
 export const getMovies = async (query = "action") => {
   const res = await fetch(`${API_BASE}/movies?search=${query}`);
