@@ -1,9 +1,11 @@
 const express = require("express");
+const cors = require("cors");
 const app = express();
 const fs = require("fs");
 const path = require("path");
 
 app.use(express.json());
+app.use(cors());
 
 const API_KEY = "f6d3ed3f";
 
@@ -222,6 +224,8 @@ app.delete("/movies/:id", (req, res) => {
 });
 
 
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
