@@ -2,13 +2,25 @@ const express = require("express");
 const app = express();
 const fs = require("fs");
 const path = require("path");
-
+const cors = require("cors");
+app.use(cors());
 app.use(express.json());
 
 const API_KEY = "f6d3ed3f";
-
+function formatMovie(movie) {
+  return {
+    id: movie.id,
+    imdbID: movie.imdb_id || String(movie.id),
+    Title: movie.title,
+  Year: movie.release_date ? movie.release_date.split("/").pop() : "N/A",
+    Genre: movie.genres || "N/A",
+    imdbRating: movie.vote_average ? String(movie.vote_average) : "N/A",
+    Runtime: movie.runtime ? `${movie.runtime} min` : "N/A",
+    Plot: movie.overview || "N/A",
+    Poster: movie.poster || "N/A",
+  };
+}
 const moviesPath = path.join(__dirname, "database", "movies-db.json");
-
 
 app.get("/movies", async (req, res) => {
   try {
@@ -21,11 +33,16 @@ app.get("/movies", async (req, res) => {
     let result = movies;
 
     if (search) {
-      result = result.filter((movie) =>
-        movie.title?.toLowerCase().includes(search)
+      result = result.filter(
+        (movie) =>
+          movie.title?.toLowerCase().includes(search) ||
+          movie.genres?.toLowerCase().includes(search) ||
+          movie.overview?.toLowerCase().includes(search) ||
+          movie.keywords?.toLowerCase().includes(search),
       );
-
+console.log(formatMovie);
       if (result.length === 0) {
+        
         return res.status(200).json({
           success: true,
           message: "No movies found",
@@ -43,7 +60,7 @@ app.get("/movies", async (req, res) => {
         if (!movie.poster && movie.imdb_id) {
           try {
             const response = await fetch(
-              `http://www.omdbapi.com/?i=${movie.imdb_id}&apikey=${API_KEY}`
+              `http://www.omdbapi.com/?i=${movie.imdb_id}&apikey=${API_KEY}`,
             );
 
             const data = await response.json();
@@ -55,16 +72,15 @@ app.get("/movies", async (req, res) => {
             console.log("Error fetching poster:", err.message);
           }
         }
-      })
+      }),
     );
 
     fs.writeFileSync(moviesPath, JSON.stringify(movies, null, 2));
 
     return res.status(200).json({
       success: true,
-      data: result,
+      data: result.map(formatMovie),
     });
-
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -73,7 +89,6 @@ app.get("/movies", async (req, res) => {
     });
   }
 });
-
 
 app.get("/movies/:id", (req, res) => {
   try {
@@ -92,9 +107,8 @@ app.get("/movies/:id", (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: movie,
+      data: formatMovie(movie),
     });
-
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -104,10 +118,18 @@ app.get("/movies/:id", (req, res) => {
   }
 });
 
-
 app.post("/movies", (req, res) => {
   try {
-    const { title, description, year, imdb_id } = req.body;
+    const {
+      title,
+      description,
+      year,
+      imdb_id,
+      genres,
+      vote_average,
+      runtime,
+      poster,
+    } = req.body;
 
     if (!title || !description || !year) {
       return res.status(400).json({
@@ -124,10 +146,13 @@ app.post("/movies", (req, res) => {
     const newMovie = {
       id: maxId + 1,
       title,
-      description,
-      year,
+      overview: description,
+      release_date: year ? String(year) : null,
+      genres: genres || null,
+      vote_average: vote_average ? parseFloat(vote_average) : null,
+      runtime: runtime ? parseInt(runtime) : null,
+      poster: poster || null,
       imdb_id: imdb_id || null,
-      poster: null,
     };
 
     movies.push(newMovie);
@@ -136,9 +161,8 @@ app.post("/movies", (req, res) => {
 
     return res.status(201).json({
       success: true,
-      data: newMovie,
+      data: formatMovie(newMovie),
     });
-
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -147,7 +171,6 @@ app.post("/movies", (req, res) => {
     });
   }
 });
-
 
 app.patch("/movies/:id", (req, res) => {
   try {
@@ -174,9 +197,8 @@ app.patch("/movies/:id", (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: movies[index],
+      data: formatMovie(movies[index]),
     });
-
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -185,7 +207,6 @@ app.patch("/movies/:id", (req, res) => {
     });
   }
 });
-
 
 app.delete("/movies/:id", (req, res) => {
   try {
@@ -209,9 +230,8 @@ app.delete("/movies/:id", (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: movie,
+      data: formatMovie(movie),
     });
-
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -221,7 +241,6 @@ app.delete("/movies/:id", (req, res) => {
   }
 });
 
-
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
+app.listen(4000, () => {
+  console.log("Server is running on port 4000");
 });

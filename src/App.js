@@ -9,20 +9,18 @@ import ConfirmModal from "./components/ConfirmModal";
 import MovieFormModal from "./components/MovieFormModal";
 import Toast from "./components/Toast";
 import * as movieApi from "./services/api";
-
+import { Routes, Route, useNavigate } from "react-router-dom";
 function App() {
   const [movies, setMovies] = useState([]);
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [hoveredMovie, setHoveredMovie] = useState(null);
   const [status, setStatus] = useState("loading");
-  const [page, setPage] = useState("home");
-  const [detailMovie, setDetailMovie] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [editMovie, setEditMovie] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [toast, setToast] = useState(null);
   const [saveBanner, setSaveBanner] = useState(false);
-
+  const navigate = useNavigate();
   const displayedMovie = hoveredMovie || selectedMovie;
 
   function showToast(message, type = "success") {
@@ -36,11 +34,15 @@ function App() {
     setHoveredMovie(null);
     try {
       const data = await movieApi.getMovies(query);
-      if (!data || data.length === 0) {
+      const moviesList = Array.isArray(data)
+        ? data
+        : data.data || data.movies || [];
+      if (!moviesList || moviesList.length === 0) {
         setStatus("empty");
         return;
       }
-      setMovies(data);
+      setMovies(moviesList);
+      setSelectedMovie(moviesList[0]);
       setSelectedMovie(data[0]);
       setStatus("success");
     } catch {
@@ -62,8 +64,7 @@ function App() {
   }, [hoveredMovie, selectedMovie]);
 
   function handleView(movie) {
-    setDetailMovie(movie);
-    setPage("detail");
+    navigate(`/movie/${movie.id}`, { state: { movie } });
   }
 
   function handleDeleteRequest(movie) {
@@ -73,9 +74,8 @@ function App() {
   async function handleDeleteConfirm() {
     try {
       await movieApi.deleteMovie(confirmDelete.id);
-      setMovies(prev => prev.filter(m => m.id !== confirmDelete.id));
+      setMovies((prev) => prev.filter((m) => m.id !== confirmDelete.id));
       if (selectedMovie?.id === confirmDelete.id) setSelectedMovie(null);
-      if (detailMovie?.id === confirmDelete.id) setPage("home");
       setConfirmDelete(null);
       showToast("Deleted successfully");
     } catch {
@@ -90,9 +90,8 @@ function App() {
   async function handleEditSave(updated) {
     try {
       const saved = await movieApi.updateMovie(updated.id, updated);
-      setMovies(prev => prev.map(m => m.id === saved.id ? saved : m));
+      setMovies((prev) => prev.map((m) => (m.id === saved.id ? saved : m)));
       if (selectedMovie?.id === saved.id) setSelectedMovie(saved);
-      if (detailMovie?.id === saved.id) setDetailMovie(saved);
       setEditMovie(null);
       setSaveBanner(true);
       setTimeout(() => setSaveBanner(false), 3000);
@@ -104,7 +103,7 @@ function App() {
   async function handleAddSave(newMovie) {
     try {
       const savedMovie = await movieApi.addMovie(newMovie);
-      setMovies(prev => [savedMovie, ...prev]);
+      setMovies((prev) => [savedMovie, ...prev]);
       setSelectedMovie(savedMovie);
       setShowAddModal(false);
       showToast("Added Successfully", "success");
@@ -113,87 +112,39 @@ function App() {
     }
   }
 
-  if (page === "detail" && detailMovie) {
-    return (
-      <>
-        <MovieDetailPage
-          movie={detailMovie}
-          onBack={() => setPage("home")}
+
+return (
+  <Routes>
+    <Route path="/" element={
+      <div className="overlay">
+        <Header onSearch={fetchMovies} onAdd={() => setShowAddModal(true)} />
+        <MovieBanner movie={displayedMovie} />
+        <MoviesCards
+          movies={movies}
+          status={status}
+          selectedMovie={selectedMovie}
+          onSelect={setSelectedMovie}
+          onHover={setHoveredMovie}
+          onView={handleView}
           onEdit={handleEditRequest}
           onDelete={handleDeleteRequest}
         />
-        {confirmDelete && (
-          <ConfirmModal
-            title={confirmDelete.Title}
-            onConfirm={handleDeleteConfirm}
-            onCancel={() => setConfirmDelete(null)}
-          />
-        )}
-        {editMovie && (
-          <MovieFormModal
-            movie={editMovie}
-            isEdit
-            onSave={handleEditSave}
-            onClose={() => setEditMovie(null)}
-          />
-        )}
+        {confirmDelete && <ConfirmModal title={confirmDelete.Title} onConfirm={handleDeleteConfirm} onCancel={() => setConfirmDelete(null)} />}
+        {editMovie && <MovieFormModal movie={editMovie} isEdit onSave={handleEditSave} onClose={() => setEditMovie(null)} />}
+        {showAddModal && <MovieFormModal onSave={handleAddSave} onClose={() => setShowAddModal(false)} />}
         {saveBanner && <div className="save-banner">Saved Successfully</div>}
-        {toast && (
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onDone={() => setToast(null)}
-          />
-        )}
-      </>
-    );
-  }
-
-  return (
-    <div className="overlay">
-      <Header onSearch={fetchMovies} onAdd={() => setShowAddModal(true)} />
-      <MovieBanner movie={displayedMovie} />
-      <MoviesCards
-        movies={movies}
-        status={status}
-        selectedMovie={selectedMovie}
-        onSelect={setSelectedMovie}
-        onHover={setHoveredMovie}
-        onView={handleView}
+        {toast && <Toast message={toast.message} type={toast.type} onDone={() => setToast(null)} />}
+      </div>
+    } />
+    <Route path="/movie/:id" element={
+      <MovieDetailPage
         onEdit={handleEditRequest}
         onDelete={handleDeleteRequest}
+        onBack={() => navigate("/")}
       />
-      {confirmDelete && (
-        <ConfirmModal
-          title={confirmDelete.Title}
-          onConfirm={handleDeleteConfirm}
-          onCancel={() => setConfirmDelete(null)}
-        />
-      )}
-      {editMovie && (
-        <MovieFormModal
-          movie={editMovie}
-          isEdit
-          onSave={handleEditSave}
-          onClose={() => setEditMovie(null)}
-        />
-      )}
-      {showAddModal && (
-        <MovieFormModal
-          onSave={handleAddSave}
-          onClose={() => setShowAddModal(false)}
-        />
-      )}
-      {saveBanner && <div className="save-banner">Saved Successfully</div>}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onDone={() => setToast(null)}
-        />
-      )}
-    </div>
-  );
+    } />
+  </Routes>
+);
 }
 
 export default App;

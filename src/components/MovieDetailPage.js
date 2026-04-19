@@ -1,14 +1,20 @@
 import "../App.css";
 import { useEffect } from "react";
-
-export default function MovieDetailPage({ movie, onBack, onEdit, onDelete }) {
+import { useLocation, useNavigate } from "react-router-dom";
+export default function MovieDetailPage({ onEdit, onDelete }) {
+  const { state } = useLocation();
+  const navigate = useNavigate();
+  const movie = state?.movie;
 
   useEffect(() => {
     document.body.style.backgroundImage = "none";
-    return () => { document.body.style.backgroundImage = "none"; };//
+    return () => { document.body.style.backgroundImage = "none"; };
   }, [movie]);
 
-  if (!movie) return null;
+  if (!movie) {
+    navigate("/");
+    return null;
+  }
 
   const badges = [
     
@@ -80,7 +86,7 @@ export default function MovieDetailPage({ movie, onBack, onEdit, onDelete }) {
               <i className="fas fa-trash" style={{ marginRight: 6 }}></i>
               Delete
             </button>
-            <button className="btn-back" onClick={onBack}>
+            <button className="btn-back" onClick={() => navigate("/")}>
               <i className="fas fa-arrow-left" style={{ marginRight: 6 }}></i>
               Back
             </button>

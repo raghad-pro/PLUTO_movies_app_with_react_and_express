@@ -31,18 +31,18 @@ export default function MovieFormModal({ movie, isEdit, onSave, onClose }) {
     }
   }
 
-  function handleSubmit() {
-    if (!form.Title.trim()) {
-      setError("Please fill in the required fields.");
-      return;
-    }
-    setError("");
-    onSave({
-      ...movie,
-      ...form,
-      imdbID: movie?.imdbID || `custom-${Date.now()}`,
-    });
+function handleSubmit() {
+  if (!form.Title.trim() || !form.Plot.trim() || !form.Year.trim()) {
+    setError("Please fill in the required fields.");
+    return;
   }
+  setError("");
+  onSave({
+    ...movie,
+    ...form,
+    imdbID: movie?.imdbID || `custom-${Date.now()}`,
+  });
+}
 
   return (
     <div className="modal-backdrop">
@@ -74,7 +74,7 @@ export default function MovieFormModal({ movie, isEdit, onSave, onClose }) {
           <div key={f.name}>
             <label className="modal-input-label">
               {f.label}
-              {f.name === "Title" && <span style={{ color: "#ef4444", marginLeft: 4 }}>*</span>}
+             {["Title", "Year", "Plot"].includes(f.name) && <span style={{ color: "#ef4444", marginLeft: 4 }}>*</span>}
             </label>
             {f.multiline ? (
               <textarea
@@ -84,7 +84,7 @@ export default function MovieFormModal({ movie, isEdit, onSave, onClose }) {
                 placeholder={f.placeholder}
                 rows={3}
                 className="modal-input modal-textarea"
-                style={f.name === "Title" && error ? { borderColor: "#ef4444" } : {}}
+               style={["Title", "Year", "Plot"].includes(f.name) && error && !form[f.name].trim() ? { borderColor: "#ef4444" } : {}}
               />
             ) : (
               <input
@@ -93,7 +93,7 @@ export default function MovieFormModal({ movie, isEdit, onSave, onClose }) {
                 onChange={handle}
                 placeholder={f.placeholder}
                 className="modal-input"
-                style={f.name === "Title" && error ? { borderColor: "#ef4444" } : {}}
+              style={["Title", "Year", "Plot"].includes(f.name) && error && !form[f.name].trim() ? { borderColor: "#ef4444" } : {}}
               />
             )}
           </div>
