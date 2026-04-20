@@ -4,6 +4,14 @@ A full-stack Movies Application built using **React (Frontend)** and **Node.js /
 The app allows users to manage movies (view, search, add, update, delete).
 
 ---
+
+# 👥 Team Members
+
+* Raghad Ayad (Frontend)
+* Mohammed Abu Samra (Backend)
+
+---
+---
 ## 📥 Clone the Project
 
 Before running the project, you need to clone the repository from GitHub:
@@ -17,16 +25,6 @@ Then navigate into the project folder:
 ```bash id="cln2"
 cd PLUTO_movies_app_with_react_and_express
 ```
-
----
-
-# 👥 Team Members
-
-* Raghad Ayad (Frontend)
-* Mohammed Abu Samra (Backend)
-
----
-
 # 🚀 How to Run the Project
 
 ## 🔵 Backend Setup
