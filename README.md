@@ -56,6 +56,7 @@ http://localhost:4000
 
 ```bash id="p1v7lz"
 npm install
+```
 npm start
 ```
 
