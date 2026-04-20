@@ -35,13 +35,14 @@ Make sure **Node.js** is installed: https://nodejs.org
 
 ```bash id="kq9x7m"
 cd backend
+```
 ```bash id="cln2"
 npm install
 ```
 ```bash id="cln2"
 node server.js
 ```
-```
+
 
 📌 Backend runs on:
 
