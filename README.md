@@ -34,9 +34,7 @@ cd PLUTO_movies_app_with_react_and_express
 Make sure **Node.js** is installed: https://nodejs.org
 
 ```bash id="kq9x7m"
-```bash id="cln2"
 cd backend
-```
 ```bash id="cln2"
 npm install
 ```
