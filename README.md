@@ -11,7 +11,6 @@ The app allows users to manage movies (view, search, add, update, delete).
 * Mohammed Abu Samra (Backend)
 
 ---
----
 ## 📥 Clone the Project
 
 Before running the project, you need to clone the repository from GitHub:
