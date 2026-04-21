@@ -54,7 +54,6 @@ console.log(formatMovie);
     if (!isNaN(limit) && limit > 0) {
       result = result.slice(0, limit);
     }
-
     await Promise.all(
       result.map(async (movie) => {
         if (!movie.poster && movie.imdb_id) {
